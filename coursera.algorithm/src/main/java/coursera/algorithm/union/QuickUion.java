@@ -32,7 +32,6 @@ public class QuickUion extends QuickFinder {
 		while(id != getArray()[id]){
 			id = getArray()[id];
 		}
-		
 		return id;
 	}
 
