@@ -72,15 +72,15 @@ public class PercolationTest {
 	public void test_isFull_with_N_is_2(){
 		Percolation percolation = new Percolation(2);
 		percolation.open(1, 1);
-		boolean isOpen = percolation.isFull(1, 1);
-		assertTrue(isOpen);
+		boolean isFull = percolation.isFull(1, 1);
+		assertTrue(isFull);
 		
-		isOpen = percolation.isFull(1, 2); //1,2 is not open
-		assertFalse(isOpen);
+		isFull = percolation.isFull(1, 2); //1,2 is not open
+		assertFalse(isFull);
 		
 		percolation.open(1, 2);
-		isOpen = percolation.isFull(1, 2); //1,2 is not open
-		assertTrue(isOpen);
+		isFull = percolation.isFull(1, 2); //1,2 is not open
+		assertTrue(isFull);
 	}
 	
 	@Test
@@ -99,5 +99,27 @@ public class PercolationTest {
 		assertFalse(percolation.percolates());
 		percolation.open(2, 1);
 		assertTrue(percolation.percolates());
+	}
+	
+	@Test
+	public void test_percolates_with_N_is_25(){
+		final int N = 25;
+		Percolation percolation = new Percolation(N);
+		assertFalse(percolation.percolates());
+		percolation.open(1, 7);
+		percolation.open(1, 8);
+		percolation.open(1, 9);
+		percolation.open(1, 17);
+		percolation.open(1, 18);
+		percolation.open(1, 19);
+
+		percolation.open(2, 5);
+		percolation.open(2, 6);
+		percolation.open(2, 7);
+		assertTrue(percolation.isFull(2, 5));
+		percolation.open(2, 8);
+		percolation.open(2, 9);
+		assertTrue(percolation.isFull(2, 7));
+		assertFalse(percolation.percolates());
 	}
 }

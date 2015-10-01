@@ -1,86 +1,110 @@
 package coursera.assignment1;
 
+import edu.princeton.cs.algs4.WeightedQuickUnionUF;
+
 
 public class Percolation {
-	private final int OPEN = 1;
-	private final int BLOCKED = 0;
-	private final int[] grid;
+	private final boolean[] sites;
 	private final int N;
-	private final int[] sizeOfTree;
-	
+	private final WeightedQuickUnionUF unionFinder;
+	private final int topIndex;
+	private final int bottomIndex;
 	public Percolation(int N){
-		checkInitN(N);
+		validatePositive(N);
 		this.N = N;
 		int totalSize = N*N;
-		grid = new int[totalSize];
-		sizeOfTree = new int[totalSize];
-		
+		unionFinder = new WeightedQuickUnionUF(totalSize + 2);
+		sites = new boolean[totalSize];
+		topIndex = totalSize;
+		bottomIndex = totalSize +1;
 		initGrid(totalSize);
 	}
 
 	private void initGrid(int totalSize) {
 		for(int i = 0; i < totalSize; i++){
-			grid[i] = BLOCKED;
-			sizeOfTree[i] = 1;
+			sites[i] = Boolean.FALSE;
 		}
 	}
 	
 	public void open(int i, int j){
-		checkRange(i, j);
+		validateInvalidIndex(i, j);
 		int index = getIndex(i, j);
-		if(this.grid[index] != OPEN){
-			this.grid[index] = OPEN;
+		if(!isOpen(i, j)){
+			this.sites[index] = Boolean.TRUE;
+			
+			if(N == 1){
+				this.unionFinder.union(index, bottomIndex);
+				return;
+			}
+			connectToLeftIfOpen(i, j);
+			connectToRightIfOpen(i, j);
+			connectToUpIfOpen(i, j);
+			connectToBelowIfOpen(i, j);
+			
+			if (1 == i) {
+                this.unionFinder.union(index, topIndex);
+            }
+			
+			int gridSize = N *N;
+			for (int b = gridSize-1; b >= gridSize-N; b--) {
+                if (this.sites[b] && this.unionFinder.connected(topIndex, b)) {
+                	this.unionFinder.union(b, bottomIndex);
+                    break;
+                }
+            }
+		}
+	}
+
+	private void connectToBelowIfOpen(int i, int j) {
+		if(i - 1 > 0 && isOpen(i - 1, j)){
+			union(getIndex(i - 1, j), getIndex(i, j));
+		}
+	}
+
+	private void connectToUpIfOpen(int i, int j) {
+		if(i + 1 <= N && isOpen(i + 1, j)){
+			union(getIndex(i, j), getIndex(i + 1, j));
+		}
+	}
+
+	private void connectToRightIfOpen(int i, int j) {
+		if(j + 1 <= N && isOpen(i, j + 1)){
+			union(getIndex(i, j), getIndex(i, (j + 1)));
+		}
+	}
+
+	private void connectToLeftIfOpen(int i, int j) {
+		if(j - 1 > 0 && isOpen(i, j -1)){
+			union(getIndex(i, j), getIndex(i, (j - 1)));
 		}
 	}
 	
 	public void union(int p, int q) {
-		int rootP = root(p);
-		int rootQ = root(q);
-		int sizeP = this.sizeOfTree[rootP];
-		int sizeQ = this.sizeOfTree[rootQ];
-		if(sizeP < sizeQ){
-			this.grid[p] = rootQ;
-			this.sizeOfTree[rootQ] += sizeP;
-		}else{
-			this.grid[q] = rootP;
-			this.sizeOfTree[rootP] += sizeQ;
-		}
+		unionFinder.union(p, q);
 	}
 	
 	public boolean isOpen(int i, int j) {
-		checkRange(i, j);
+		validateInvalidIndex(i, j);
 		int index = getIndex(i, j);
-		return (this.grid[index]  == OPEN);
+		return (this.sites[index]);
 	}
 
 	private int getIndex(int i, int j) {
-		int index = ((j -1) * N) + i - 1;
+		int index = ((i -1) * N) + j - 1;
 		return index;
 	}
 	
 	public boolean isFull(int i, int j) {
-		checkRange(i, j);
-		final int index = getIndex(i, j);
-		int root = root(index);
-		return (this.grid[root] == OPEN && root >= 0  && root <= N -1);
+		validateInvalidIndex(i, j);
+		return this.unionFinder.connected(topIndex, getIndex(i, j));
 	}
 	
-	private int root(int p) {
-		if(p == 0)return 0;
-		int root = p;
-		while((root != this.grid[root]) && (this.grid[root] == OPEN)){
-			this.grid[root] = this.grid[root(this.grid[root])];
-			root = this.grid[root];
-		}
-		return root;
-	}
-	
-	private void checkInitN(int N){
+	private void validatePositive(int N){
 		if(N < 1){
 			throw new java.lang.IllegalArgumentException("N has to be greater than 0");
 		}
 	}
-	private void checkRange(int i, int j){
+	private void validateInvalidIndex(int i, int j){
 		if((i < 1 || j < 1)){
 			throw new IndexOutOfBoundsException("Index i, j have to be greater than 0, i="+i + "j="+j);
 		}
@@ -91,20 +115,11 @@ public class Percolation {
 
 	public boolean percolates() {
 		if(N ==1){
-			for(int i = 0; i < N; i++){
-				if(this.grid[i] == OPEN){
-					return true;
-				}
-			}
-			return false;
+			return isOpen(1, 1);
 		}
-		
-		for(int j = 1; j <= N; j++){
-			if(isFull(N, j)){
-				return true;
-			}
-		}
-		return false;
+		System.out.println("parent of topIndex: "+ this.unionFinder.find(topIndex));
+		System.out.println("parent of bottomIndex: "+ this.unionFinder.find(bottomIndex));
+		return this.unionFinder.connected(topIndex, bottomIndex);
 	}
 
 	
